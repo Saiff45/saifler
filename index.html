@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تطبيق نَفَس حَيّ | أنسنة شوارع القاهرة الكبرى</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cairo -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              dark: '#1B4332',
+              primary: '#2D6A4F',
+              light: '#40916C',
+              mint: '#D8F3DC',
+              gold: '#D99B26',
+              cream: '#F8F7F2',
+              charcoal: '#2B2D42',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #E8ECE9;
+      color: #2B2D42;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Custom Scrollbar inside Phone Frame */
+    .phone-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .phone-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .phone-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Map Grid Background */
+    .cairo-map-bg {
+      background-color: #E5EFE9;
+      background-image: 
+        linear-gradient(rgba(45, 106, 79, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 106, 79, 0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Pulse animation for map pins */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      70% { transform: scale(1.65); opacity: 0; }
+      100% { transform: scale(1.65); opacity: 0; }
+    }
+    .pin-pulse::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 9999px;
+      background-color: inherit;
+      animation: pulse-ring 2s infinite;
+      z-index: -1;
+    }
+
+    /* Smooth screen transition */
+    .screen-view {
+      animation: fadeIn 0.22s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row items-center justify-center p-0 sm:p-4 lg:p-6 gap-6">
+
+  <!-- Desktop Presentation Sidebar (For Graduation Committee Showcase) -->
+  <aside class="hidden lg:flex flex-col w-80 bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-brand-primary/15 self-center max-h-[860px] overflow-y-auto">
+    <!-- Custom Brand Logo SVG -->
+    <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
+      <div class="w-14 h-14 rounded-2xl bg-brand-dark flex items-center justify-center text-white shadow-md relative overflow-hidden shrink-0">
+        <svg viewBox="0 0 64 64" class="w-11 h-11">
+          <!-- Leaf + Road + Footsteps Wordplay Icon -->
+          <path d="M18 46 C26 30, 38 28, 48 14 C48 28, 40 42, 22 48 Z" fill="#40916C"/>
+          <path d="M14 52 C24 44, 34 42, 50 42" stroke="#D99B26" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <circle cx="44" cy="24" r="5" fill="#D99B26"/>
+          <circle cx="22" cy="54" r="2.2" fill="#FFFFFF"/>
+          <circle cx="28" cy="53" r="2.2" fill="#FFFFFF"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-extrabold text-brand-dark leading-tight">نَفَس حَيّ</h1>
+        <p class="text-xs font-semibold text-brand-gold">دليلك لخطوة أسهل | القاهرة الكبرى</p>
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-600 mt-3 leading-relaxed">
+      نموذج تفاعلي متكامل لمشروع التخرج يضم <strong>الـ 10 شاشات الأساسية</strong> لرصد المشكلات، المشاركة في التشجير، وتوثيق تطوير الشوارع.
+    </p>
+
+    <!-- Direct 10-Screen Switcher for Jury -->
+    <div class="mt-4">
+      <h2 class="text-xs font-bold text-brand-dark uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+        <i class="fa-solid fa-layer-group text-brand-gold"></i>
+        خريطة شاشات التطبيق (10 شاشات)
+      </h2>
+      <div id="desktopScreenList" class="space-y-1.5">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Live Impact Summary Box -->
+    <div class="mt-5 p-3.5 rounded-2xl bg-brand-cream border border-brand-primary/20">
+      <div class="flex items-center justify-between text-xs font-bold text-brand-dark mb-1">
+        <span>نقاط المستخدم (هالة أحمد)</span>
+        <span id="sidebarPoints" class="text-brand-gold text-sm font-extrabold">320 نقطة</span>
+      </div>
+      <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+        <div id="sidebarProgress" class="bg-brand-primary h-full transition-all duration-500" style="width: 68%"></div>
+      </div>
+      <p class="text-[11px] text-gray-500 mt-1.5">جرب إرسال بلاغ، التصويت على مقترح، أو التسجيل في فعالية لترى تحديث النقاط والإشعارات فوراً!</p>
+    </div>
+  </aside>
+
+  <!-- Mobile Phone Interactive Container -->
+  <main class="w-full sm:w-[412px] h-screen sm:h-[850px] bg-brand-cream sm:rounded-[44px] shadow-2xl sm:border-[10px] sm:border-brand-dark flex flex-col relative overflow-hidden">
+    
+    <!-- Mobile Status Bar -->
+    <div class="bg-brand-dark text-white px-6 pt-2.5 pb-2 flex items-center justify-between text-xs select-none shrink-0">
+      <span class="font-bold tracking-wider">9:41</span>
+      <div class="w-24 h-4 bg-black/40 rounded-full hidden sm:block"></div>
+      <div class="flex items-center gap-1.5 text-[11px]">
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-full text-brand-mint"></i>
+      </div>
+    </div>
+
+    <!-- App Top Header -->
+    <header class="bg-white/95 backdrop-blur-md px-4 py-3 border-b border-gray-200/80 flex items-center justify-between shrink-0 z-20">
+      <div class="flex items-center gap-2.5">
+        <button id="backBtn" onclick="goBack()" class="hidden w-8 h-8 rounded-full bg-brand-cream text-brand-dark items-center justify-center hover:bg-brand-mint transition">
+          <i class="fa-solid fa-arrow-right text-sm"></i>
+        </button>
+
+        <!-- Brand Wordplay Mini Emblem -->
+        <div onclick="navigateTo(1)" class="flex items-center gap-2 cursor-pointer">
+          <div class="w-9 h-9 rounded-xl bg-brand-dark flex items-center justify-center text-white shadow-sm">
+            <i class="fa-solid fa-seedling text-brand-gold text-sm"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-base text-brand-dark leading-none">نَفَس حَيّ</span>
+              <span class="text-[10px] bg-brand-mint text-brand-dark px-1.5 py-0.5 rounded-full font-bold">القاهرة</span>
+            </div>
+            <p id="headerSubtitle" class="text-[11px] text-gray-500 font-medium mt-0.5">صباح الخير، هالة أحمد 👋</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header Quick Actions (Screen 8 Before/After, Screen 9 Notifications, Screen 7 Profile) -->
+      <div class="flex items-center gap-2">
+        <button onclick="navigateTo(8)" title="قبل وبعد" class="w-9 h-9 rounded-full bg-brand-cream text-brand-primary flex items-center justify-center hover:bg-brand-mint transition relative">
+          <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+        </button>
+        <button onclick="navigateTo(9)" title="الإشعارات ودعوات البريد" class="w-9 h-9 rounded-full bg-brand-cream text-brand-dark flex items-center justify-center hover:bg-brand-mint transition relative">
+          <i class="fa-regular fa-bell text-sm"></i>
+          <span id="notifBadge" class="absolute -top-0.5 -left-0.5 w-4 h-4 bg-brand-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
+        </button>
+        <button onclick="navigateTo(7)" title="ملفي وأثري" class="w-9 h-9 rounded-full bg-brand-dark text-white font-bold text-xs flex items-center justify-center border-2 border-brand-gold shadow-sm">
+          هـ
+        </button>
+      </div>
+    </header>
+
+    <!-- Quick 10-Screens Jump Bar (Mobile & Desktop accessible) -->
+    <div class="bg-brand-dark/95 text-white px-3 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 border-b border-white/10">
+      <span class="text-[10px] text-brand-gold font-bold shrink-0 ml-1"><i class="fa-solid fa-compass ml-1"></i>الشاشات الـ10:</span>
+      <div id="topScreenPills" class="flex items-center gap-1">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Main Scrollable Screen Content -->
+    <div id="screenContainer" class="flex-1 overflow-y-auto phone-scroll pb-6 relative">
+      <!-- Dynamic Screen Content Injected Here -->
+    </div>
+
+    <!-- Toast Feedback Message -->
+    <div id="toastBox" class="pointer-events-none opacity-0 transition-all duration-300 absolute bottom-20 inset-x-4 bg-brand-dark text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between z-50 border border-brand-gold/50">
+      <div class="flex items-center gap-2.5">
+        <i class="fa-solid fa-circle-check text-brand-gold text-lg"></i>
+        <span id="toastText" class="text-xs font-bold">تمت العملية بنجاح!</span>
+      </div>
+      <span id="toastPoints" class="text-[11px] bg-brand-gold text-brand-dark font-extrabold px-2 py-0.5 rounded-full">+50 نقطة</span>
+    </div>
+
+    <!-- Bottom Navigation Bar (5 Core Pillars) -->
+    <nav class="bg-white border-t border-gray-200 px-2 py-2 flex items-center justify-around shrink-0 z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
+      <button onclick="navigateTo(1)" data-nav="1" class="nav-tab flex flex-col items-center gap-1 px-2 py-1 rounded-xl text-brand-dark font-bold transition">
+        <i class="fa-solid fa-house text-base"></i>
+        <span class="text-[10px]">الرئيسية</span>
+      </button>
+      <button onclick="navigateTo(2)" data-nav="2" class="nav-tab flex flex-col items-center gap-1 px-2 py-1 rounded-xl text-gray-400 hover:text-brand-primary transition">
+        <i class="fa-solid fa-map-location-dot text-base"></i>
+        <span class="text-[10px]">الخريطة</span>
+      </button>
+      <!-- Center Floating Action Button for Screen 3: Report a Place -->
+      <button onclick="navigateTo(3)" data-nav="3" class="flex flex-col items-center -mt-6 group">
+        <div class="w-13 h-13 w-12 h-12 rounded-2xl bg-brand-dark text-white flex items-center justify-center shadow-lg border-4 border-brand-cream group-hover:bg-brand-primary transition">
+          <i class="fa-solid fa-camera text-brand-gold text-lg"></i>
+        </div>
+        <span class="text-[10px] font-bold text-brand-dark mt-0.5">ارصد مكان</span>
+      </button>
+      <button onclick="navigateTo(4)" data-nav="4" class="nav-tab flex flex-col items-center gap-1 px-2 py-1 rounded-xl text-gray-400 hover:text-brand-primary transition">
+        <i class="fa-solid fa-people-group text-base"></i>
+        <span class="text-[10px]">الفعاليات</span>
+      </button>
+      <button onclick="navigateTo(5)" data-nav="5" class="nav-tab flex flex-col items-center gap-1 px-2 py-1 rounded-xl text-gray-400 hover:text-brand-primary transition">
+        <i class="fa-solid fa-lightbulb text-base"></i>
+        <span class="text-[10px]">المقترحات</span>
+      </button>
+    </nav>
+  </main>
+
+  <script>
+    // ==========================================
+    // APPLICATION STATE & DATA (ALL 10 SCREENS)
+    // ==========================================
+    const screensMeta = [
+      { id: 1, title: '1. الصفحة الرئيسية', short: '1. الرئيسية', icon: 'fa-house' },
+      { id: 2, title: '2. الخريطة التفاعلية (Green Map)', short: '2. الخريطة', icon: 'fa-map-location-dot' },
+      { id: 3, title: '3. رصد الأماكن (Report a Place)', short: '3. ارصد', icon: 'fa-camera' },
+      { id: 4, title: '4. الفعاليات والمبادرات', short: '4. الفعاليات', icon: 'fa-people-group' },
+      { id: 5, title: '5. اقتراحات المجتمع', short: '5. المقترحات', icon: 'fa-lightbulb' },
+      { id: 6, title: '6. المدونة والدليل التوعوي', short: '6. المدونة', icon: 'fa-book-open-reader' },
+      { id: 7, title: '7. ملفي وأثري (My Impact)', short: '7. ملفي وأثري', icon: 'fa-user-check' },
+      { id: 8, title: '8. قبل وبعد (Before & After)', short: '8. قبل وبعد', icon: 'fa-wand-magic-sparkles' },
+      { id: 9, title: '9. الإشعارات ودعوات البريد', short: '9. الإشعارات', icon: 'fa-bell' },
+      { id: 10, title: '10. تفاصيل المكان وتقييمه', short: '10. تفاصيل مكان', icon: 'fa-location-dot' }
+    ];
+
+    const state = {
+      currentScreen: 1,
+      history: [1],
+      userPoints: 320,
+      placesContributed: 12,
+      eventsJoined: 5,
+      selectedMapFilter: 'all',
+      selectedPlaceId: 1,
+      selectedEventFilter: 'الكل',
+      selectedBlogCategory: 'الكل',
+      notifTab: 'app', // 'app' or 'email'
+      reportPhotoIndex: 0,
+      reportIssueType: 'نقص تشجير وظل',
+      suggestionType: 'شجرة',
+
+      places: [
+        {
+          id: 1,
+          name: 'منطقة خضراء - شارع الثورة',
+          district: 'مصر الجديدة',
+          status: 'available',
+          statusText: 'متاح للاستخدام • تم التطوير',
+          rating: 4.8,
+          reviewsCount: 124,
+          walkability: 92,
+          x: 68,
+          y: 32,
+          following: true,
+          image: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=800&q=80',
+          features: ['أشجار كثيفة', 'مقاعد خشبية', 'ممشى ممهد ♿', 'إضاءة ليلية'],
+          description: 'تم تطوير الجزيرة الوسطى وأرصفة شارع الثورة بمشاركة 45 متطوعاً، وتزويدها بأشجار البونسيانا والفيكس لتخفيض الحرارة بـ 8 درجات مئوية للمشاة.',
+          historyLog: [
+            { date: '15 فبراير 2026', title: 'رصد نقص الظل وتآكل الرصيف عبر التطبيق', type: 'report' },
+            { date: '28 فبراير 2026', title: 'اعتماد المقترح وتنظيم مبادرة "يوم التشجير"', type: 'initiative' },
+            { date: '10 مارس 2026', title: 'زراعة 30 شجرة وتركيب 12 مقعداً خشبياً وتحديث الخريطة', type: 'done' }
+          ],
+          comments: [
+            { user: 'أحمد سامي', rating: 5, text: 'الممشى بقى مريح جداً في المشي الصبح وفيه ظل ممتاز، شكراً لشباب المبادرة!' },
+            { user: 'سارة محمود', rating: 5, text: 'الرصيف بقى مناسب جداً لكبار السن والعربيات المتحركة.' }
+          ]
+        },
+        {
+          id: 2,
+          name: 'رصيف محطة مترو كلية البنات',
+          district: 'مصر الجديدة',
+          status: 'needs_action',
+          statusText: 'يحتاج تدخل وتشجير',
+          rating: 3.1,
+          reviewsCount: 64,
+          walkability: 45,
+          x: 42,
+          y: 45,
+          following: false,
+          image: 'https://images.unsplash.com/photo-1541888946425-d09bb18086f6?auto=format&fit=crop&w=800&q=80',
+          features: ['شمس مباشرة', 'يحتاج مقاعد', 'رصيف مزدحم'],
+          description: 'نقطة عبور حيوية لآلاف الطلاب والمشاة يومياً (الميل الأول والأخير)، تحتاج إلى زراعة أشجار ظل وإزالة العوائق من الرصيف.',
+          historyLog: [
+            { date: '5 أبريل 2026', title: 'تم رصد غياب الظل بواسطة 18 مستخدماً', type: 'report' },
+            { date: '18 أبريل 2026', title: 'جاري التنسيق مع الحي لإطلاق يوم تشجير', type: 'initiative' }
+          ],
+          comments: [
+            { user: 'مريم طارق', rating: 3, text: 'المكان مهم جداً ومحتاج شجر يظلل على الناس وهي خارجة من المترو.' }
+          ]
+        },
+        {
+          id: 3,
+          name: 'ممشى حديقة الميرغني المطور',
+          district: 'مصر الجديدة',
+          status: 'shade',
+          statusText: 'مقاعد وظل متاح',
+          rating: 4.9,
+          reviewsCount: 210,
+          walkability: 96,
+          x: 74,
+          y: 62,
+          following: true,
+          image: 'https://images.unsplash.com/photo-1585938389612-a552a28d6914?auto=format&fit=crop&w=800&q=80',
+          features: ['مظلات طبيعية', 'مقاعد انتظار', 'مسار دراجات ومشاة', 'صناديق فرز مخلفات'],
+          description: 'نموذج ناجح لأنسنة الشوارع وتحويل المساحات المهملة إلى متنفس طبيعي آمن للشباب والعائلات.',
+          historyLog: [
+            { date: '12 يناير 2026', title: 'بلاغ مجتمعي عن إهمال الرصيف المحيط بالحديقة', type: 'report' },
+            { date: '2 فبراير 2026', title: 'تنفيذ مبادرة صيانة الأرصفة وزراعة 40 شجرة ظل', type: 'done' }
+          ],
+          comments: [
+            { user: 'كريم عادل', rating: 5, text: 'أحلى مكان للمشي دلوقتي في مصر الجديدة!' }
+          ]
+        },
+        {
+          id: 4,
+          name: 'شارع عباس العقاد - تقاطع البطراوي',
+          district: 'مدينة نصر',
+          status: 'needs_action',
+          statusText: 'يحتاج صيانة رصيف وتشجير',
+          rating: 2.8,
+          reviewsCount: 89,
+          walkability: 40,
+          x: 28,
+          y: 68,
+          following: false,
+          image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80',
+          features: ['يحتاج منحدرات ♿', 'نقص أشجار', 'تعديات على الرصيف'],
+          description: 'منطقة تجارية مزدحمة تحتاج إلى إعادة تنظيم الرصيف للمشاة وإضافة أحواض نباتات لفصل حركة المشاة عن السيارات.',
+          historyLog: [
+            { date: '10 أبريل 2026', title: 'رصد تكسير في بلاط الرصيف وتعديات المحلات', type: 'report' }
+          ],
+          comments: [
+            { user: 'محمود حسن', rating: 3, text: 'الرصيف محتاج يتوسع ويتزرع شجر بونسيانا.' }
+          ]
+        }
+      ],
+
+      events: [
+        {
+          id: 101,
+          title: 'يوم التشجير المجتمعي - حديقة الميرغني',
+          category: 'زراعة',
+          date: 'السبت 2 مايو • 9:00 صباحاً',
+          location: 'مصر الجديدة - حديقة الميرغني',
+          volunteers: 34,
+          joined: false,
+          points: 100,
+          image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=700&q=80',
+          desc: 'مبادرة لزراعة 25 شجرة بونسيانا وجاكرندا لتظليل مسار المشاة وتجميل محيط الحديقة.'
+        },
+        {
+          id: 102,
+          title: 'صيانة المساحات العامة ودهان الأرصفة',
+          category: 'صيانة',
+          date: 'الجمعة 8 مايو • 10:00 صباحاً',
+          location: 'مدينة نصر - شارع عباس العقاد',
+          volunteers: 19,
+          joined: true,
+          points: 80,
+          image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=700&q=80',
+          desc: 'إصلاح مقاعد الجلوس الخشبية، طلاء بردورات الرصيف، وتخصيص منحدرات لكبار السن وذوي الإعاقة.'
+        },
+        {
+          id: 103,
+          title: 'ورشة زراعة الأسطح والشرفات الخضراء',
+          category: 'توعية',
+          date: 'الثلاثاء 12 مايو • 5:00 مساءً',
+          location: 'المعادي - شارع 9 (مساحة المجتمع)',
+          volunteers: 42,
+          joined: false,
+          points: 60,
+          image: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=700&q=80',
+          desc: 'تعلم أساسيات اختيار النباتات المقاومة للحرارة وكيفية المساهمة في تقليل الجزيرة الحرارية من شرفة منزلك.'
+        }
+      ],
+
+      suggestions: [
+        {
+          id: 201,
+          title: 'زراعة صف أشجار بونسيانا في شارع مكة لتظليل موقف الأتوبيس',
+          author: 'عمر خالد',
+          district: 'مصر الجديدة',
+          type: 'شجرة',
+          votes: 148,
+          voted: false,
+          status: 'تم الاعتماد للتنفيذ ✓',
+          statusColor: 'bg-emerald-100 text-emerald-800'
+        },
+        {
+          id: 202,
+          title: 'إضافة 6 مقاعد خشبية ومظلة انتظار أمام محطة مترو الأهرام',
+          author: 'نهى عبد الرحمن',
+          district: 'مصر الجديدة',
+          type: 'مقعد',
+          votes: 96,
+          voted: true,
+          status: 'قيد الدراسة مع الحي',
+          statusColor: 'bg-amber-100 text-amber-800'
+        },
+        {
+          id: 203,
+          title: 'تخصيص ممشى آمن وعمل منحدرات للكراسي المتحركة بشارع الحجاز',
+          author: 'يوسف نبيل',
+          district: 'مصر الجديدة',
+          type: 'ممشى',
+          votes: 84,
+          voted: false,
+          status: 'مفتوح للتصويت',
+          statusColor: 'bg-blue-100 text-blue-800'
+        }
+      ],
+
+      blogs: [
+        {
+          id: 301,
+          title: 'أهمية المساحات الخضراء في المدن وتخفيض حرارة الأسفلت بـ 12 درجة',
+          category: 'مقالات',
+          readTime: '3 دقائق',
+          image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=700&q=80',
+          summary: 'كيف تحمي الأشجار الظليلة المشاة من ظاهرة الجزيرة الحرارية الحضرية في شوارع القاهرة وتشجع على المشي اليومي.',
+          content: 'تُعد ظاهرة الجزيرة الحرارية الحضرية من أكبر التحديات التي تواجه المشاة في القاهرة الكبرى؛ حيث يمتص الأسفلت والخرسانة أشعة الشمس ترتفع حرارتهما بمعدل 8 إلى 12 درجة مئوية فوق حرارة الهواء. التشجير المدروس على الأرصفة يوفر مظلة طبيعية تقلل الإجهاد الحراري وتحسن جودة الهواء.'
+        },
+        {
+          id: 302,
+          title: 'دليل الأشجار: كيف تختار الشجرة المناسبة لشارعك في القاهرة؟',
+          category: 'دليل الأشجار',
+          readTime: '4 دقائق',
+          image: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=700&q=80',
+          summary: 'تعرف على أفضل أشجار الظل قليلة استهلاك المياه مثل البونسيانا، الجاكرندا، والكاسيا نودوزا.',
+          content: 'عند زراعة شجرة في رصيف الشارع، يجب اختيار أشجار ذات جذور عمودية لا تتلف البنية التحتية أو ترفع بلاط الرصيف، وذات خيمة ورقية واسعة تمنح الظل مثل: البونسيانا، الجاكرندا، الزنزلخت، والتيكوما.'
+        },
+        {
+          id: 303,
+          title: 'حق الطريق: 5 نصائح للحفاظ على نظافة الأماكن العامة وأثاث الشارع',
+          category: 'نصائح',
+          readTime: '2 دقائق',
+          image: 'https://images.unsplash.com/photo-1518391846015-55a9cc003b25?auto=format&fit=crop&w=700&q=80',
+          summary: 'دور المواطن في حماية المقاعد، ترشيد المياه، ومنع التعدي على أرصفة المشاة لضمان استدامة التطوير.',
+          content: 'ينطلق نجاح أي مشروع لتطوير الشوارع من الشراكة بين الدولة والمواطن: حافظ على مقاعد الانتظار، تجنب رش المياه على الأسفلت لأنه يؤدي لتآكله، وشارك في الإبلاغ عن أي أعطال أو تعديات على حق المشاة.'
+        }
+      ],
+
+      beforeAfterItems: [
+        {
+          id: 401,
+          title: 'تطوير حديقة وممشى الميرغني',
+          location: 'مصر الجديدة • أبريل 2026',
+          volunteers: 42,
+          treesPlanted: 35,
+          seatsAdded: 10,
+          beforeImg: 'https://images.unsplash.com/photo-1541888946425-d09bb18086f6?auto=format&fit=crop&w=800&q=80',
+          afterImg: 'https://images.unsplash.com/photo-1585938389612-a552a28d6914?auto=format&fit=crop&w=800&q=80',
+          beforeLabel: 'قبل: رصيف متهالك، شمس حارقة، وغياب تام للمقاعد والظل',
+          afterLabel: 'بعد: ممشى إنساني مظلل، أشجار كثيفة، ومقاعد خشبية مريحة',
+          currentView: 'after'
+        },
+        {
+          id: 402,
+          title: 'أنسنة وتشجير شارع الثورة',
+          location: 'مصر الجديدة • مارس 2026',
+          volunteers: 28,
+          treesPlanted: 22,
+          seatsAdded: 8,
+          beforeImg: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80',
+          afterImg: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=800&q=80',
+          beforeLabel: 'قبل: تكدس بصري ونقص المساحات الخضراء على جانبي الطريق',
+          afterLabel: 'بعد: مسار أخضر آمن يربط السكان بمحطات المواصلات بسهولة',
+          currentView: 'after'
+        }
+      ],
+
+      notifications: [
+        {
+          id: 501,
+          type: 'report',
+          icon: 'fa-circle-check text-emerald-600 bg-emerald-100',
+          title: 'تم قبول البلاغ الذي قدمته ✓',
+          desc: 'تمت مراجعة بلاغك بخصوص تشجير شارع الثورة وإدراجه ضمن خطة مبادرات الأسبوع القادم.',
+          time: 'منذ ساعتين'
+        },
+        {
+          id: 502,
+          type: 'event',
+          icon: 'fa-calendar-check text-amber-600 bg-amber-100',
+          title: 'تذكير بفعالية قريبة منك 🌱',
+          desc: 'يوم التشجير المجتمعي في حديقة الميرغني يبدأ السبت القادم الساعة 9 صباحاً.',
+          time: 'منذ 5 ساعات'
+        },
+        {
+          id: 503,
+          type: 'place',
+          icon: 'fa-wand-magic-sparkles text-brand-primary bg-brand-mint',
+          title: 'تم تحديث المكان الذي تتابعه 📍',
+          desc: 'تمت إضافة صور "قبل وبعد" جديدة لتطوير ممشى الميرغني بعد انتهاء أعمال التشجير.',
+          time: 'أمس'
+        }
+      ],
+
+      emailInvitations: [
+        {
+          id: 601,
+          subject: 'دعوة رسمية للمشاركة في مبادرة زراعة الأشجار - مصر الجديدة',
+          sender: 'فريق مبادرة نَفَس حَيّ <volunteer@nafshay.org>',
+          date: 'السبت 2 مايو 2026 • 9:00 صباحاً',
+          location: 'حديقة الميرغني - أمام محطة المترو',
+          role: 'زراعة أشجار ظل وتوثيق الأثر قبل وبعد',
+          confirmed: false
+        }
+      ]
+    };
+
+    // ==========================================
+    // NAVIGATION & UI HELPERS
+    // ==========================================
+    function renderNavigationBars() {
+      // Top horizontal quick pills inside phone
+      const topPills = document.getElementById('topScreenPills');
+      topPills.innerHTML = screensMeta.map(s => `
+        <button onclick="navigateTo(${s.id})" class="px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 transition ${state.currentScreen === s.id ? 'bg-brand-gold text-brand-dark shadow-sm' : 'bg-white/10 text-white/85 hover:bg-white/20'}">
+          ${s.short}
+        </button>
+      `).join('');
+
+      // Desktop sidebar list
+      const desktopList = document.getElementById('desktopScreenList');
+      if (desktopList) {
+        desktopList.innerHTML = screensMeta.map(s => `
+          <button onclick="navigateTo(${s.id})" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition ${state.currentScreen === s.id ? 'bg-brand-dark text-white shadow-md' : 'bg-brand-cream/70 text-brand-charcoal hover:bg-brand-mint/60'}">
+            <span class="flex items-center gap-2">
+              <i class="fa-solid ${s.icon} ${state.currentScreen === s.id ? 'text-brand-gold' : 'text-brand-primary'} w-4"></i>
+              ${s.title}
+            </span>
+            <i class="fa-solid fa-chevron-left text-[10px] opacity-60"></i>
+          </button>
+        `).join('');
+      }
+
+      // Bottom Nav Active Highlight
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        const navId = parseInt(btn.getAttribute('data-nav'));
+        if (navId === state.currentScreen) {
+          btn.classList.remove('text-gray-400');
+          btn.classList.add('text-brand-dark', 'font-bold');
+        } else {
+          btn.classList.remove('text-brand-dark', 'font-bold');
+          btn.classList.add('text-gray-400');
+        }
+      });
+
+      // Back button visibility
+      const backBtn = document.getElementById('backBtn');
+      if (state.currentScreen !== 1) {
+        backBtn.classList.remove('hidden');
+        backBtn.classList.add('flex');
+      } else {
+        backBtn.classList.add('hidden');
+        backBtn.classList.remove('flex');
+      }
+
+      // Update Header Subtitle
+      const currentMeta = screensMeta.find(s => s.id === state.currentScreen);
+      document.getElementById('headerSubtitle').textContent = state.currentScreen === 1
+        ? 'صباح الخير، هالة أحمد 👋'
+        : currentMeta.title;
+
+      // Update Sidebar Points
+      const ptsEl = document.getElementById('sidebarPoints');
+      if (ptsEl) ptsEl.textContent = `${state.userPoints} نقطة`;
+      const notifBadge = document.getElementById('notifBadge');
+      if (notifBadge) notifBadge.textContent = state.notifications.length;
+    }
+
+    function navigateTo(screenId, placeId = null) {
+      if (placeId) {
+        state.selectedPlaceId = placeId;
+      }
+      if (state.currentScreen !== screenId) {
+        state.history.push(screenId);
+      }
+      state.currentScreen = screenId;
+      renderNavigationBars();
+      renderCurrentScreen();
+      document.getElementById('screenContainer').scrollTop = 0;
+    }
+
+    function goBack() {
+      if (state.history.length > 1) {
+        state.history.pop();
+        state.currentScreen = state.history[state.history.length - 1];
+      } else {
+        state.currentScreen = 1;
+      }
+      renderNavigationBars();
+      renderCurrentScreen();
+    }
+
+    function showToast(message, pointsAdded = 0) {
+      if (pointsAdded > 0) {
+        state.userPoints += pointsAdded;
+        document.getElementById('toastPoints').textContent = `+${pointsAdded} نقطة`;
+        document.getElementById('toastPoints').classList.remove('hidden');
+      } else {
+        document.getElementById('toastPoints').classList.add('hidden');
+      }
+      document.getElementById('toastText').textContent = message;
+      const toast = document.getElementById('toastBox');
+      toast.classList.remove('opacity-0', 'translate-y-3');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      renderNavigationBars();
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+      }, 2800);
+    }
+
+    // ==========================================
+    // SCREEN RENDERERS (1 TO 10)
+    // ==========================================
+    function renderCurrentScreen() {
+      const container = document.getElementById('screenContainer');
+      switch (state.currentScreen) {
+        case 1: container.innerHTML = renderScreen1Home(); break;
+        case 2: container.innerHTML = renderScreen2GreenMap(); break;
+        case 3: container.innerHTML = renderScreen3ReportPlace(); break;
+        case 4: container.innerHTML = renderScreen4Activities(); break;
+        case 5: container.innerHTML = renderScreen5Suggestions(); break;
+        case 6: container.innerHTML = renderScreen6Blog(); break;
+        case 7: container.innerHTML = renderScreen7Profile(); break;
+        case 8: container.innerHTML = renderScreen8BeforeAfter(); break;
+        case 9: container.innerHTML = renderScreen9Notifications(); break;
+        case 10: container.innerHTML = renderScreen10PlaceDetails(); break;
+        default: container.innerHTML = renderScreen1Home();
+      }
+    }
+
+    // ------------------------------------------
+    // 1. الصفحة الرئيسية (Home)
+    // ------------------------------------------
+    function renderScreen1Home() {
+      return `
+        <div class="screen-view p-4 space-y-5">
+          <!-- Hero Banner -->
+          <div class="relative rounded-3xl overflow-hidden shadow-lg bg-brand-dark text-white p-5">
+            <img src="https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=900&q=80" alt="شارع أخضر" class="absolute inset-0 w-full h-full object-cover opacity-35">
+            <div class="relative z-10">
+              <span class="inline-block bg-brand-gold text-brand-dark text-[10px] font-extrabold px-2.5 py-1 rounded-full mb-2">
+                مبادرة أنسنة شوارع القاهرة
+              </span>
+              <h2 class="text-xl font-extrabold leading-snug">الشارع حياة..<br>شارك في تطويره 🌿</h2>
+              <p class="text-xs text-white/90 mt-1 max-w-[250px]">ارصد الأماكن التي تحتاج تشجير أو صيانة، وشارك في تحويل شوارعنا لمساحات مريحة للمشي.</p>
+              <div class="flex items-center gap-2 mt-4">
+                <button onclick="navigateTo(2)" class="bg-brand-gold hover:bg-amber-500 text-brand-dark font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-map-location-dot"></i>
+                  اكتشف الفرص القريبة
+                </button>
+                <button onclick="navigateTo(8)" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition">
+                  شاهد قبل وبعد
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Impact Strip -->
+          <div class="grid grid-cols-3 gap-2.5">
+            <div onclick="navigateTo(7)" class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 text-center cursor-pointer hover:border-brand-primary transition">
+              <p class="text-lg font-extrabold text-brand-dark">${state.userPoints}</p>
+              <p class="text-[10px] text-gray-500 font-semibold">نقاطي التشجيعية ⭐</p>
+            </div>
+            <div onclick="navigateTo(8)" class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 text-center cursor-pointer hover:border-brand-primary transition">
+              <p class="text-lg font-extrabold text-brand-primary">18 مكان</p>
+              <p class="text-[10px] text-gray-500 font-semibold">تم تطويره وتوثيقه 🌱</p>
+            </div>
+            <div onclick="navigateTo(5)" class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 text-center cursor-pointer hover:border-brand-primary transition">
+              <p class="text-lg font-extrabold text-brand-gold">328 صوت</p>
+              <p class="text-[10px] text-gray-500 font-semibold">مقترحات المجتمع 💡</p>
+            </div>
+          </div>
+
+          <!-- Upcoming Events Section -->
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <h3 class="font-extrabold text-sm text-brand-dark flex items-center gap-1.5">
+                <i class="fa-solid fa-calendar-day text-brand-primary"></i>
+                الفعاليات القادمة
+              </h3>
+              <button onclick="navigateTo(4)" class="text-xs font-bold text-brand-primary hover:underline">عرض الكل</button>
+            </div>
+            <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 flex gap-3 items-center">
+              <img src="${state.events[0].image}" class="w-20 h-20 rounded-xl object-cover shrink-0" alt="فعالية">
+              <div class="flex-1 min-w-0">
+                <span class="text-[10px] bg-brand-mint text-brand-dark font-bold px-2 py-0.5 rounded-full">مبادرة تشجير</span>
+                <h4 class="font-bold text-xs text-brand-charcoal mt-1 truncate">${state.events[0].title}</h4>
+                <p class="text-[11px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock ml-1"></i>${state.events[0].date}</p>
+                <div class="mt-2 flex items-center justify-between">
+                  <span class="text-[10px] text-brand-primary font-bold"><i class="fa-solid fa-users ml-1"></i>${state.events[0].volunteers} متطوع</span>
+                  <button onclick="toggleEventJoin(101)" class="text-[11px] font-bold px-3 py-1 rounded-lg transition ${state.events[0].joined ? 'bg-emerald-100 text-emerald-800' : 'bg-brand-dark text-white'}">
+                    ${state.events[0].joined ? 'تم التسجيل ✓' : 'سجل الآن'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nearby Places & Opportunities -->
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <h3 class="font-extrabold text-sm text-brand-dark flex items-center gap-1.5">
+                <i class="fa-solid fa-location-crosshairs text-brand-gold"></i>
+                فرص المشاركة والأماكن القريبة
+              </h3>
+              <button onclick="navigateTo(2)" class="text-xs font-bold text-brand-primary hover:underline">الخريطة التفاعلية</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${state.places.slice(0, 2).map(p => `
+                <div onclick="navigateTo(10, ${p.id})" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition">
+                  <div class="h-24 relative">
+                    <img src="${p.image}" class="w-full h-full object-cover" alt="${p.name}">
+                    <span class="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full ${p.status === 'available' ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">
+                      ${p.status === 'available' ? 'متاح ومطور' : 'يحتاج تدخل'}
+                    </span>
+                  </div>
+                  <div class="p-2.5">
+                    <h4 class="font-bold text-xs text-brand-dark truncate">${p.name}</h4>
+                    <p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot ml-1 text-brand-primary"></i>${p.district} • ⭐ ${p.rating}</p>
+                    <button class="mt-2 w-full bg-brand-cream hover:bg-brand-mint text-brand-dark font-bold text-[10px] py-1.5 rounded-lg transition">
+                      عرض التفاصيل والسجل
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Latest Educational Blog & Guide Preview -->
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <h3 class="font-extrabold text-sm text-brand-dark flex items-center gap-1.5">
+                <i class="fa-solid fa-book-open text-brand-primary"></i>
+                المدونة والدليل التوعوي
+              </h3>
+              <button onclick="navigateTo(6)" class="text-xs font-bold text-brand-primary hover:underline">كل المقالات</button>
+            </div>
+            <div onclick="navigateTo(6)" class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex items-center gap-3 cursor-pointer hover:border-brand-primary transition">
+              <img src="${state.blogs[1].image}" class="w-16 h-16 rounded-xl object-cover shrink-0" alt="مقال">
+              <div class="flex-1">
+                <span class="text-[10px] text-brand-gold font-extrabold">دليل الأشجار 🌳</span>
+                <h4 class="font-bold text-xs text-brand-dark leading-snug mt-0.5">${state.blogs[1].title}</h4>
+                <p class="text-[10px] text-gray-400 mt-1">قراءة في ${state.blogs[1].readTime}</p>
+              </div>
+              <i class="fa-solid fa-chevron-left text-xs text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ------------------------------------------
+    // 2. الخريطة التفاعلية (Green Map)
+    // ------------------------------------------
+    function renderScreen2GreenMap() {
+      const filteredPlaces = state.places.filter(p => {
+        if (state.selectedMapFilter === 'all') return true;
+        return p.status === state.selectedMapFilter;
+      });
+      const activePlace = state.places.find(p => p.id === state.selectedPlaceId) || state.places[0];
+
+      return `
+        <div class="screen-view flex flex-col h-full">
+          <!-- Top Search & Filter Controls -->
+          <div class="p-3 bg-white border-b border-gray-100 space-y-2.5">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-gray-400 text-xs"></i>
+              <input type="text" placeholder="ابحث عن شارع أو حديقة (مصر الجديدة، مدينة نصر...)" class="w-full bg-brand-cream text-xs pr-9 pl-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-primary">
+            </div>
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <button onclick="setMapFilter('all')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold shrink-0 transition ${state.selectedMapFilter === 'all' ? 'bg-brand-dark text-white' : 'bg-brand-cream text-gray-600'}">
+                الكل (${state.places.length})
+              </button>
+              <button onclick="setMapFilter('available')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold shrink-0 flex items-center gap-1 transition ${state.selectedMapFilter === 'available' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-800'}">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> مساحات خضراء متاحة
+              </button>
+              <button onclick="setMapFilter('needs_action')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold shrink-0 flex items-center gap-1 transition ${state.selectedMapFilter === 'needs_action' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-800'}">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> يحتاج تشجير وتطوير
+              </button>
+              <button onclick="setMapFilter('shade')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold shrink-0 flex items-center gap-1 transition ${state.selectedMapFilter === 'shade' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-800'}">
+                <span class="w-2 h-2 rounded-full bg-sky-500"></span> مقاعد وظل
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Cairo Map Canvas -->
+          <div class="relative flex-1 min-h-[380px] cairo-map-bg overflow-hidden select-none">
+            <!-- Simulated Nile & Main Roads SVG -->
+            <svg viewBox="0 0 400 400" class="w-full h-full absolute inset-0 pointer-events-none opacity-80">
+              <!-- Nile River Curve -->
+              <path d="M 45 0 Q 65 180 35 400" stroke="#A3D5F7" stroke-width="26" fill="none" />
+              <!-- Green Park Zones -->
+              <rect x="230" y="90" width="90" height="65" rx="16" fill="#B7E4C7" opacity="0.65"/>
+              <rect x="240" y="210" width="110" height="70" rx="20" fill="#B7E4C7" opacity="0.65"/>
+              <!-- Major Roads -->
+              <path d="M 0 140 L 400 110" stroke="#FFFFFF" stroke-width="8" />
+              <path d="M 120 0 L 290 400" stroke="#FFFFFF" stroke-width="8" />
+              <path d="M 60 280 L 400 220" stroke="#FDE68A" stroke-width="6" />
+            </svg>
+
+            <!-- District Labels -->
+            <span class="absolute top-6 left-6 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] font-extrabold text-brand-dark shadow-sm">حي مصر الجديدة</span>
+            <span class="absolute bottom-36 right-6 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] font-extrabold text-brand-dark shadow-sm">مدينة نصر</span>
+            <span class="absolute top-28 right-8 text-[11px] font-bold text-emerald-800/70">شارع الثورة</span>
+            <span class="absolute top-56 left-16 text-[11px] font-bold text-emerald-800/70">حديقة الميرغني</span>
+
+            <!-- Interactive Pins -->
+            ${filteredPlaces.map(p => {
+              const isSelected = p.id === activePlace.id;
+              let pinColor = 'bg-emerald-600';
+              let icon = 'fa-tree';
+              if (p.status === 'needs_action') { pinColor = 'bg-amber-500'; icon = 'fa-triangle-exclamation'; }
+              if (p.status === 'shade') { pinColor = 'bg-sky-600'; icon = 'fa-chair'; }
+
+              return `
+                <button onclick="selectMapPin(${p.id})" style="left: ${p.x}%; top: ${p.y}%;" class="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none z-10">
+                  <div class="relative flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full ${pinColor} text-white flex items-center justify-center shadow-lg border-2 border-white transition transform ${isSelected ? 'scale-125 ring-4 ring-brand-gold/60 pin-pulse' : 'hover:scale-110'}">
+                      <i class="fa-solid ${icon} text-sm"></i>
+                    </div>
+                    <span class="mt-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-white text-brand-dark shadow border border-gray-100 whitespace-nowrap">
+                      ${p.name.split('-')[0]}
+                    </span>
+                  </div>
+                </button>
+              `;
+            }).join('')}
+
+            <!-- Floating Add Report Button on Map -->
+            <button onclick="navigateTo(3)" class="absolute top-4 right-4 bg-brand-dark text-white text-[11px] font-bold px-3 py-2 rounded-xl shadow-lg flex items-center gap-1.5 hover:bg-brand-primary transition">
+              <i class="fa-solid fa-plus text-brand-gold"></i>
+              بلّغ عن نقطة هنا
+            </button>
+          </div>
+
+          <!-- Selected Place Bottom Preview Card -->
+          <div class="p-3 bg-white border-t border-gray-200 shadow-xl">
+            <div class="flex gap-3 items-center">
+              <img src="${activePlace.image}" class="w-20 h-20 rounded-2xl object-cover shrink-0" alt="${activePlace.name}">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${activePlace.status === 'needs_action' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+                    ${activePlace.statusText}
+                  </span>
+                  <span class="text-xs font-extrabold text-brand-gold">⭐ ${activePlace.rating}</span>
+                </div>
+                <h3 class="font-extrabold text-sm text-brand-dark truncate mt-1">${activePlace.name}</h3>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  ${activePlace.features.slice(0, 3).map(f => `
+                    <span class="text-[9px] bg-brand-cream text-gray-600 px-2 py-0.5 rounded-md font-semibold">${f}</span>
+                  `).join('')}
+                </div>
+                <div class="flex items-center gap-2 mt-2.5">
+                  <button onclick="navigateTo(10, ${activePlace.id})" class="flex-1 bg-brand-dark hover:bg-brand-primary text-white text-xs font-bold py-1.5 rounded-xl transition">
+                    عرض التفاصيل والسجل
+                  </button>
+                  <button onclick="navigateTo(3)" class="bg-brand-mint text-brand-dark text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-emerald-200 transition">
+                    شارك بتطويره
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setMapFilter(filter) {
+      state.selectedMapFilter = filter;
+      renderCurrentScreen();
+    }
+
+    function selectMapPin(placeId) {
+      state.selectedPlaceId = placeId;
+      renderCurrentScreen();
+    }
+
+    // ------------------------------------------
+    // 3. رصد الأماكن (Report a Place)
+    // ------------------------------------------
+    function renderScreen3ReportPlace() {
+      const samplePhotos = [
+        { label: 'رصيف بدون ظل أو أشجار', url: 'https://images.unsplash.com/photo-1541888946425-d09bb18086f6?auto=format&fit=crop&w=600&q=80' },
+        { label: 'تآكل الرصيف وعوائق مشاة', url: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=600&q=80' },
+        { label: 'مساحة تصلح لزراعة أشجار', url: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=600&q=80' }
+      ];
+      const issues = ['نقص تشجير وظل', 'رصيف تالف أو غير ممهد', 'غياب مقاعد انتظار', 'تعدي محلات على الرصيف', 'تراكم مخلفات'];
+
+      return `
+        <div class="screen-view p-4 space-y-4">
+          <div class="bg-brand-mint/60 border border-brand-primary/20 rounded-2xl p-3 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-dark text-brand-gold flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-camera-retro text-lg"></i>
+            </div>
+            <div>
+              <h3 class="font-extrabold text-xs text-brand-dark">ارصد مشكلة أو اقترح تطويراً في شارعك</h3>
+              <p class="text-[11px] text-gray-600">تتم مراجعة البلاغ وتحديث الخريطة التفاعلية وإشراك المتطوعين.</p>
+            </div>
+          </div>
+
+          <!-- Camera / Photo Picker Box -->
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+            <div class="relative h-36 rounded-xl overflow-hidden mb-3 border-2 border-dashed border-brand-primary/40 group">
+              <img src="${samplePhotos[state.reportPhotoIndex].url}" class="w-full h-full object-cover" alt="صورة الرصد">
+              <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white">
+                <i class="fa-solid fa-camera text-2xl text-brand-gold mb-1"></i>
+                <span class="text-xs font-bold">${samplePhotos[state.reportPhotoIndex].label}</span>
+                <span class="text-[10px] text-white/80 mt-0.5">تم إرفاق الصورة بنجاح ✓</span>
+              </div>
+            </div>
+            <p class="text-[11px] text-gray-500 mb-2 font-semibold">اختر صورة محاكاة للمعاينة السريعة:</p>
+            <div class="flex justify-center gap-2">
+              ${samplePhotos.map((p, idx) => `
+                <button onclick="selectReportPhoto(${idx})" class="text-[10px] px-2.5 py-1 rounded-lg font-bold transition ${state.reportPhotoIndex === idx ? 'bg-brand-dark text-white' : 'bg-brand-cream text-gray-600'}">
+                  ${p.label.split(' ')[0]} ${idx + 1}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Auto GPS Location -->
+          <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-emerald-100 text-brand-primary flex items-center justify-center">
+                <i class="fa-solid fa-location-dot"></i>
+              </div>
+              <div>
+                <p class="text-[10px] text-gray-400 font-bold">الموقع الحالي (تحديد تلقائي GPS)</p>
+                <p id="reportLocationInput" class="text-xs font-extrabold text-brand-dark">مصر الجديدة - شارع الميرغني (أمام المترو)</p>
+              </div>
+            </div>
+            <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-1 rounded-lg">دقيق ✓</span>
+          </div>
+
+          <!-- Issue Category Selector -->
+          <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
+            <label class="block text-xs font-extrabold text-brand-dark mb-2">نوع الملاحظة أو الاحتياج:</label>
+            <div class="flex flex-wrap gap-1.5">
+              ${issues.map(issue => `
+                <button onclick="selectReportIssue('${issue}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition ${state.reportIssueType === issue ? 'bg-brand-dark text-white shadow-sm' : 'bg-brand-cream text-gray-600 hover:bg-brand-mint'}">
+                  ${issue}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Description Input -->
+          <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
+            <label class="block text-xs font-extrabold text-brand-dark mb-1.5">وصف المشكلة أو الحل المقترح:</label>
+            <textarea id="reportDesc" rows="3" placeholder="مثال: الرصيف هنا مشمس جداً ويحتاج زراعة 4 أشجار بونسيانا ومقعدين لكبار السن..." class="w-full bg-brand-cream rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary"></textarea>
+          </div>
+
+          <button onclick="submitNewReport()" class="w-full bg-brand-dark hover:bg-brand-primary text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane text-brand-gold"></i>
+            إرسال البلاغ وتحديث الخريطة (+50 نقطة)
+          </button>
+        </div>
+      `;
+    }
+
+    function selectReportPhoto(index) {
+      state.reportPhotoIndex = index;
+      renderCurrentScreen();
+    }
+
+    function selectReportIssue(issue) {
+      state.reportIssueType = issue;
+      renderCurrentScreen();
+    }
+
+    function submitNewReport() {
+      const descEl = document.getElementById('reportDesc');
+      const desc = descEl && descEl.value.trim() ? descEl.value.trim() : `بلاغ ميداني: ${state.reportIssueType} في شارع الميرغني يحتاج تدخل وتشجير.`;
+      
+      // Add to notifications
+      state.notifications.unshift({
+        id: Date.now(),
+        type: 'report',
+        icon: 'fa-camera text-brand-dark bg-brand-mint',
+        title: `تم استلام بلاغك: ${state.reportIssueType}`,
+        desc: desc,
+        time: 'الآن'
+      });
+
+      state.placesContributed += 1;
+      showToast('تم إرسال البلاغ بنجاح وإضافته للمراجعة!', 50);
+      setTimeout(() => navigateTo(9), 1100);
+    }
+
+    // ------------------------------------------
+    // 4. الفعاليات والمبادرات (Activities & Activations)
+    // ------------------------------------------
+    function renderScreen4Activities() {
+      const categories = ['الكل', 'زراعة', 'صيانة', 'توعية'];
+      const filtered = state.events.filter(e => state.selectedEventFilter === 'الكل' || e.category === state.selectedEventFilter);
+
+      return `
+        <div class="screen-view p-4 space-y-4">
+          <!-- Category Filter Tabs -->
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            ${categories.map(cat => `
+              <button onclick="setEventFilter('${cat}')" class="px-4 py-1.5 rounded-full text-xs font-extrabold transition ${state.selectedEventFilter === cat ? 'bg-brand-dark text-white shadow' : 'bg-white text-gray-600 border border-gray-200'}">
+                ${cat}
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Events List -->
+          <div class="space-y-3.5">
+            ${filtered.map(ev => `
+              <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                <div class="h-36 relative">
+                  <img src="${ev.image}" class="w-full h-full object-cover" alt="${ev.title}">
+                  <span class="absolute top-3 right-3 bg-brand-dark/90 backdrop-blur-sm text-brand-gold text-[10px] font-extrabold px-2.5 py-1 rounded-full">
+                    +${ev.points} نقطة تطوع
+                  </span>
+                  <span class="absolute bottom-2 left-2 bg-white/95 text-brand-dark text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow">
+                    <i class="fa-solid fa-users text-brand-primary ml-1"></i>${ev.volunteers} مشارك مسجل
+                  </span>
+                </div>
+                <div class="p-3.5">
+                  <h3 class="font-extrabold text-sm text-brand-dark">${ev.title}</h3>
+                  <p class="text-[11px] text-gray-600 mt-1 leading-relaxed">${ev.desc}</p>
+                  <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 mt-2.5 pt-2.5 border-t border-gray-100">
+                    <span><i class="fa-regular fa-calendar text-brand-primary ml-1"></i>${ev.date}</span>
+                    <span><i class="fa-solid fa-location-dot text-brand-gold ml-1"></i>${ev.location}</span>
+                  </div>
+                  <button onclick="toggleEventJoin(${ev.id})" class="mt-3 w-full py-2.5 rounded-xl font-extrabold text-xs transition flex items-center justify-center gap-1.5 ${ev.joined ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-brand-dark text-white hover:bg-brand-primary'}">
+                    <i class="fa-solid ${ev.joined ? 'fa-circle-check' : 'fa-hand-holding-heart'}"></i>
+                    ${ev.joined ? 'تم التسجيل وإرسال دعوة البريد ✓' : 'سجل الآن وشارك في المبادرة'}
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setEventFilter(cat) {
+      state.selectedEventFilter = cat;
+      renderCurrentScreen();
+    }
+
+    function toggleEventJoin(eventId) {
+      const ev = state.events.find(e => e.id === eventId);
+      if (!ev) return;
+      ev.joined = !ev.joined;
+      if (ev.joined) {
+        ev.volunteers += 1;
+        state.eventsJoined += 1;
+        state.emailInvitations.unshift({
+          id: Date.now(),
+          subject: `تأكيد تسجيلك في: ${ev.title}`,
+          sender: 'مبادرة نَفَس حَيّ <events@nafshay.org>',
+          date: ev.date,
+          location: ev.location,
+          role: 'متطوع ميداني في التشجير وأنسنة الشارع',
+          confirmed: true
+        });
+        showToast(`تم تسجيلك في "${ev.title}" وإرسال دعوة لبريدك!`, ev.points);
+      } else {
+        ev.volunteers -= 1;
+        state.eventsJoined -= 1;
+        showToast('تم إلغاء التسجيل في الفعالية');
+      }
+      renderCurrentScreen();
+    }
+
+    // ------------------------------------------
+    // 5. اقتراحات المجتمع (Community Suggestions)
+    // ------------------------------------------
+    function renderScreen5Suggestions() {
+      const types = [
+        { name: 'شجرة', icon: 'fa-tree', color: 'text-emerald-600' },
+        { name: 'مقعد', icon: 'fa-chair', color: 'text-amber-600' },
+        { name: 'ظل', icon: 'fa-umbrella-beach', color: 'text-sky-600' },
+        { name: 'ممشى', icon: 'fa-person-walking', color: 'text-purple-600' }
+      ];
+
+      return `
+        <div class="screen-view p-4 space-y-4">
+          <!-- Submit New Suggestion Form -->
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+            <h3 class="font-extrabold text-xs text-brand-dark flex items-center gap-1.5">
+              <i class="fa-solid fa-lightbulb text-brand-gold"></i>
+              اقترح فكرة لتطوير شارعك (العمران التكتيكي)
+            </h3>
+            <textarea id="suggestionInput" rows="2" placeholder="اكتب اقتراحك بالتفصيل.. (مثال: إضافة مقاعد خشبية وأشجار ظل أمام مدرسة...)" class="w-full bg-brand-cream rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary"></textarea>
+            
+            <div>
+              <span class="block text-[10px] font-bold text-gray-500 mb-1.5">نوع الاقتراح:</span>
+              <div class="grid grid-cols-4 gap-2">
+                ${types.map(t => `
+                  <button onclick="selectSuggestionType('${t.name}')" class="py-2 rounded-xl border text-center transition ${state.suggestionType === t.name ? 'bg-brand-mint border-brand-primary font-extrabold text-brand-dark' : 'bg-brand-cream border-transparent text-gray-600'}">
+                    <i class="fa-solid ${t.icon} ${t.color} block text-sm mb-0.5"></i>
+                    <span class="text-[10px]">${t.name}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <button onclick="addNewSuggestion()" class="w-full bg-brand-dark hover:bg-brand-primary text-white font-extrabold text-xs py-2.5 rounded-xl shadow transition">
+              <i class="fa-solid fa-paper-plane ml-1 text-brand-gold"></i>
+              شارك الاقتراح للتصويت (+30 نقطة)
+            </button>
+          </div>
+
+          <!-- Community Suggestions Voting List -->
+          <div>
+            <h3 class="font-extrabold text-sm text-brand-dark mb-2.5">أفكار مقترحة من المجتمع (صوّت للأهم)</h3>
+            <div class="space-y-2.5">
+              ${state.suggestions.map(s => `
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between gap-3">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-1.5 mb-1">
+                      <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${s.statusColor}">${s.status}</span>
+                      <span class="text-[10px] text-gray-400 font-semibold">• ${s.district}</span>
+                    </div>
+                    <h4 class="font-bold text-xs text-brand-charcoal leading-relaxed">${s.title}</h4>
+                    <p class="text-[10px] text-gray-400 mt-1">مقترح من: ${s.author} • التصنيف: ${s.type}</p>
+                  </div>
+                  <button onclick="voteSuggestion(${s.id})" class="flex flex-col items-center justify-center px-3 py-2 rounded-xl border transition shrink-0 ${s.voted ? 'bg-brand-dark text-white border-brand-dark' : 'bg-brand-cream text-brand-dark border-gray-200 hover:bg-brand-mint'}">
+                    <i class="fa-solid fa-caret-up text-sm ${s.voted ? 'text-brand-gold' : ''}"></i>
+                    <span class="text-xs font-extrabold">${s.votes}</span>
+                    <span class="text-[9px]">صوت</span>
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function selectSuggestionType(typeName) {
+      state.suggestionType = typeName;
+      renderCurrentScreen();
+    }
+
+    function addNewSuggestion() {
+      const input = document.getElementById('suggestionInput');
+      const text = input && input.value.trim() ? input.value.trim() : `إضافة عنصر (${state.suggestionType}) لتحسين تجربة المشاة وتوفير الظل في مصر الجديدة`;
+      state.suggestions.unshift({
+        id: Date.now(),
+        title: text,
+        author: 'هالة أحمد (أنت)',
+        district: 'مصر الجديدة',
+        type: state.suggestionType,
+        votes: 1,
+        voted: true,
+        status: 'جديد • مفتوح للتصويت',
+        statusColor: 'bg-emerald-100 text-emerald-800'
+      });
+      showToast('تم نشر اقتراحك للمجتمع للتصويت عليه!', 30);
+      renderCurrentScreen();
+    }
+
+    function voteSuggestion(id) {
+      const item = state.suggestions.find(s => s.id === id);
+      if (!item) return;
+      item.voted = !item.voted;
+      item.votes += item.voted ? 1 : -1;
+      if (item.voted) showToast('تم تسجيل صوتك لدعم المقترح!', 10);
+      renderCurrentScreen();
+    }
+
+    // ------------------------------------------
+    // 6. المدونة والدليل التوعوي (Green Blog & Guide)
+    // ------------------------------------------
+    function renderScreen6Blog() {
+      const cats = ['الكل', 'مقالات', 'دليل الأشجار', 'نصائح'];
+      const list = state.blogs.filter(b => state.selectedBlogCategory === 'الكل' || b.category === state.selectedBlogCategory);
+
+      return `
+        <div class="screen-view p-4 space-y-4">
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            ${cats.map(c => `
+              <button onclick="setBlogCat('${c}')" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold shrink-0 transition ${state.selectedBlogCategory === c ? 'bg-brand-dark text-white' : 'bg-white text-gray-600 border border-gray-200'}">
+                ${c}
+              </button>
+            `).join('')}
+          </div>
+
+          <div class="space-y-3.5">
+            ${list.map(b => `
+              <article class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                <img src="${b.image}" class="w-full h-36 object-cover" alt="${b.title}">
+                <div class="p-3.5">
+                  <div class="flex items-center justify-between text-[10px] font-bold text-brand-primary mb-1">
+                    <span class="bg-brand-mint px-2.5 py-0.5 rounded-full text-brand-dark">${b.category}</span>
+                    <span><i class="fa-regular fa-clock ml-1"></i>${b.readTime}</span>
+                  </div>
+                  <h3 class="font-extrabold text-sm text-brand-dark mt-1">${b.title}</h3>
+                  <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">${b.content}</p>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setBlogCat(cat) {
+      state.selectedBlogCategory = cat;
+      renderCurrentScreen();
+    }
+
+    // ------------------------------------------
+    // 7. ملفي وأثري (My Profile & Impact)
+    // ------------------------------------------
+    function renderScreen7Profile() {
+      const badges = [
+        { name: 'صديق البيئة', icon: 'fa-seedling', bg: 'bg-emerald-100 text-emerald-700', desc: 'شارك في 3 أيام تشجير' },
+        { name: 'راصد نشط', icon: 'fa-camera', bg: 'bg-amber-100 text-amber-700', desc: 'أرسل 5 بلاغات دقيقة' },
+        { name: 'صانع الظل', icon: 'fa-tree', bg: 'bg-teal-100 text-teal-700', desc: 'ساهم في زراعة 10 أشجار' },
+        { name: 'حارس الشارع', icon: 'fa-shield-heart', bg: 'bg-purple-100 text-purple-700', desc: 'يتابع صيانة شارعه' }
+      ];
+
+      return `
+        <div class="screen-view p-4 space-y-4">
+          <!-- Profile Header Card -->
+          <div class="bg-brand-dark text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
+            <div class="flex items-center gap-3.5">
+              <div class="w-16 h-16 rounded-2xl bg-brand-gold text-brand-dark font-extrabold text-2xl flex items-center justify-center shadow-md border-2 border-white">
+                هـ
+              </div>
+              <div>
+                <h2 class="text-lg font-extrabold">هالة أحمد</h2>
+                <p class="text-xs text-brand-mint">عضو مبادر منذ مارس 2026 • مصر الجديدة</p>
+                <span class="inline-block mt-1.5 bg-white/15 text-brand-gold text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                  المستوى: حارس الشارع المتميز 🌿
+                </span>
+              </div>
+            </div>
+
+            <!-- 3 Impact Counters -->
+            <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/15 text-center">
+              <div>
+                <p class="text-xl font-extrabold text-brand-gold">${state.userPoints}</p>
+                <p class="text-[10px] text-white/80">نقطة أثر</p>
+              </div>
+              <div>
+                <p class="text-xl font-extrabold text-white">${state.placesContributed}</p>
+                <p class="text-[10px] text-white/80">أماكن شاركت بها</p>
+              </div>
+              <div>
+                <p class="text-xl font-extrabold text-brand-mint">${state.eventsJoined}</p>
+                <p class="text-[10px] text-white/80">فعاليات تطوعية</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Badges Section -->
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <h3 class="font-extrabold text-sm text-brand-dark mb-3">شاراتي التشجيعية</h3>
+            <div class="grid grid-cols-2 gap-2.5">
+              ${badges.map(b => `
+                <div class="p-2.5 rounded-xl bg-brand-cream flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-xl ${b.bg} flex items-center justify-center shrink-0">
+                    <i class="fa-solid ${b.icon} text-base"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-extrabold text-xs text-brand-dark">${b.name}</h4>
+                    <p class="text-[10px] text-gray-500">${b.desc}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Recent Contributions -->
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-extrabold text-sm text-brand-dark">مساهماتي الأخيرة الموثقة</h3>
+              <button onclick="navigateTo(8)" class="text-[11px] font-bold text-brand-primary">قبل وبعد</button>
+            </div>
+            <div class="space-y-2.5">
+              <div onclick="navigateTo(10, 3)" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-cream cursor-pointer transition">
+                <img src="${state.places[2].image}" class="w-14 h-14 rounded-xl object-cover" alt="مساهمة">
+                <div class="flex-1">
+                  <h4 class="font-bold text-xs text-brand-dark">تطوير وتشجير حديقة الميرغني</h4>
+                  <p class="text-[10px] text-gray-500">مشاركة في زراعة الأشجار • 2 فبراير 2026</p>
+                </div>
+                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">مكتمل ✓</span>
+              </div>
+              <div onclick="navigateTo(10, 1)" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-cream cursor-pointer transition">
+                <img src="${state.places[0].image}" class="w-14 h-14 rounded-xl object-cover" alt="مساهمة">
+                <div class="flex-1">
+                  <h4 class="font-bold text-xs text-brand-dark">أنسنة الجزيرة الوسطى - شارع الثورة</h4>
+                  <p class="text-[10px] text-gray-500">رصد وتوثيق بالصور • 10 مارس 2026</p>
+                </div>
+                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">مكتمل ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ------------------------------------------
+    // 8. قبل وبعد (Before & After)
+    // ------------------------------------------
+    function renderScreen8BeforeAfter() {
+      return `
+        <div class="screen-view p-4 space-y-4">
+          <div class="bg-brand-dark text-white p-4 rounded-2xl">
+            <h3 class="font-extrabold text-sm flex items-center gap-1.5 text-brand-gold">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              توثيق الأثر: شوارعنا قبل وبعد التطوير
+            </h3>
+            <p class="text-[11px] text-white/85 mt-1">اضغط على أزرار (قبل / بعد) لمقارنة كيف حولت المشاركة المجتمعية الأرصفة المهملة إلى مساحات خضراء مريحة.</p>
+          </div>
+
+          ${state.beforeAfterItems.map((item, idx) => `
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+              <div class="p-3.5 flex items-center justify-between border-b border-gray-100">
+                <div>
+                  <h4 class="font-extrabold text-sm text-brand-dark">${item.title}</h4>
+                  <p class="text-[10px] text-gray-500">${item.location}</p>
+                </div>
+                <div class="flex bg-brand-cream p-1 rounded-xl">
+                  <button onclick="toggleBeforeAfter(${idx}, 'before')" class="px-3 py-1 rounded-lg text-[11px] font-extrabold transition ${item.currentView === 'before' ? 'bg-amber-600 text-white shadow' : 'text-gray-600'}">
+                    قبل التطوير
+                  </button>
+                  <button onclick="toggleBeforeAfter(${idx}, 'after')" class="px-3 py-1 rounded-lg text-[11px] font-extrabold transition ${item.currentView === 'after' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600'}">
+                    بعد التطوير ✨
+                  </button>
+                </div>
+              </div>
+
+              <!-- Side by side + interactive highlight -->
+              <div class="relative h-48">
+                <img src="${item.currentView === 'before' ? item.beforeImg : item.afterImg}" class="w-full h-full object-cover transition-all duration-300" alt="${item.title}">
+                <span class="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-extrabold shadow ${item.currentView === 'before' ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'}">
+                  ${item.currentView === 'before' ? 'الصورة قبل التدخل ⚠️' : 'الصورة بعد التشجير والأنسنة 🌿'}
+                </span>
+                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 text-white">
+                  <p class="text-xs font-bold">${item.currentView === 'before' ? item.beforeLabel : item.afterLabel}</p>
+                </div>
+              </div>
+
+              <div class="p-3 bg-brand-cream/60 flex items-center justify-around text-center text-[11px] font-bold text-brand-dark">
+                <span><i class="fa-solid fa-tree text-emerald-600 ml-1"></i>+${item.treesPlanted} شجرة ظل</span>
+                <span><i class="fa-solid fa-chair text-amber-600 ml-1"></i>+${item.seatsAdded} مقاعد</span>
+                <span><i class="fa-solid fa-users text-brand-primary ml-1"></i>${item.volunteers} متطوع</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function toggleBeforeAfter(index, mode) {
+      state.beforeAfterItems[index].currentView = mode;
+      renderCurrentScreen();
+    }
+
+    // ------------------------------------------
+    // 9. الإشعارات ودعوات البريد (Notifications & Email Invitations)
+    // ------------------------------------------
+    function renderScreen9Notifications() {
+      return `
+        <div class="screen-view p-4 space-y-4">
+          <!-- Toggle Tabs -->
+          <div class="grid grid-cols-2 bg-white p-1 rounded-2xl border border-gray-200">
+            <button onclick="setNotifTab('app')" class="py-2 rounded-xl text-xs font-extrabold transition ${state.notifTab === 'app' ? 'bg-brand-dark text-white shadow' : 'text-gray-600'}">
+              <i class="fa-regular fa-bell ml-1"></i> إشعارات التطبيق (${state.notifications.length})
+            </button>
+            <button onclick="setNotifTab('email')" class="py-2 rounded-xl text-xs font-extrabold transition ${state.notifTab === 'email' ? 'bg-brand-dark text-white shadow' : 'text-gray-600'}">
+              <i class="fa-regular fa-envelope ml-1"></i> دعوات البريد (${state.emailInvitations.length})
+            </button>
+          </div>
+
+          ${state.notifTab === 'app' ? `
+            <div class="space-y-2.5">
+              ${state.notifications.map(n => `
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-3">
+                  <div class="w-10 h-10 rounded-xl ${n.icon} flex items-center justify-center shrink-0">
+                    <i class="fa-solid ${n.icon.split(' ')[0]} text-base"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-extrabold text-xs text-brand-dark">${n.title}</h4>
+                      <span class="text-[10px] text-gray-400">${n.time}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-600 mt-1 leading-relaxed">${n.desc}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="space-y-3">
+              ${state.emailInvitations.map((em, idx) => `
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-brand-primary/25 space-y-3">
+                  <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                    <span class="text-[10px] bg-brand-mint text-brand-dark font-extrabold px-2.5 py-0.5 rounded-full">رسالة بريد إلكتروني رسمية</span>
+                    <span class="text-[10px] text-gray-400">إلى: hala.ahmed@email.com</span>
+                  </div>
+                  <h4 class="font-extrabold text-sm text-brand-dark">${em.subject}</h4>
+                  <p class="text-[11px] text-gray-600 leading-relaxed">
+                    مرحباً هالة، بناءً على اهتمامك بتطوير المساحات العامة في حي مصر الجديدة، ندعوكِ للمشاركة الميدانية في نشاطنا القادم:
+                  </p>
+                  <div class="bg-brand-cream p-3 rounded-xl text-[11px] space-y-1">
+                    <p><strong>📍 المكان:</strong> ${em.location}</p>
+                    <p><strong>🕒 الموعد:</strong> ${em.date}</p>
+                    <p><strong>🌱 طبيعة النشاط:</strong> ${em.role}</p>
+                  </div>
+                  <button onclick="confirmEmailInvite(${idx})" class="w-full py-2.5 rounded-xl font-extrabold text-xs transition ${em.confirmed ? 'bg-emerald-100 text-emerald-800' : 'bg-brand-gold text-brand-dark hover:bg-amber-500'}">
+                    ${em.confirmed ? 'تم تأكيد حضورك بنجاح ✓' : 'تأكيد الحضور الآن'}
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function setNotifTab(tab) {
+      state.notifTab = tab;
+      renderCurrentScreen();
+    }
+
+    function confirmEmailInvite(idx) {
+      state.emailInvitations[idx].confirmed = true;
+      showToast('تم تأكيد حضورك للمبادرة عبر البريد الإلكتروني!', 40);
+      renderCurrentScreen();
+    }
+
+    // ------------------------------------------
+    // 10. تفاصيل المكان وتقييمه (Place Details & Ratings)
+    // ------------------------------------------
+    function renderScreen10PlaceDetails() {
+      const place = state.places.find(p => p.id === state.selectedPlaceId) || state.places[0];
+
+      return `
+        <div class="screen-view pb-6">
+          <!-- Hero Image -->
+          <div class="relative h-48">
+            <img src="${place.image}" class="w-full h-full object-cover" alt="${place.name}">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            <button onclick="toggleFollowPlace(${place.id})" class="absolute top-3 left-3 px-3 py-1.5 rounded-full text-xs font-extrabold shadow flex items-center gap-1.5 transition ${place.following ? 'bg-brand-gold text-brand-dark' : 'bg-white/90 text-brand-dark'}">
+              <i class="fa-solid fa-bell"></i>
+              ${place.following ? 'تتابع هذا المكان ✓' : 'متابعة التطورات'}
+            </button>
+            <div class="absolute bottom-3 right-4 left-4 text-white">
+              <span class="text-[10px] bg-emerald-600 px-2.5 py-0.5 rounded-full font-bold">${place.statusText}</span>
+              <h2 class="text-base font-extrabold mt-1">${place.name}</h2>
+              <p class="text-[11px] text-white/85"><i class="fa-solid fa-location-dot text-brand-gold ml-1"></i>${place.district} • ⭐ ${place.rating} (${place.reviewsCount} تقييم)</p>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-4">
+            <!-- Walkability Score Meter -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-extrabold text-brand-dark">مدى ملائمة المكان للمشي (Walkability)</span>
+                <span class="text-sm font-extrabold text-brand-primary">${place.walkability}%</span>
+              </div>
+              <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+                <div class="bg-brand-primary h-full rounded-full" style="width: ${place.walkability}%"></div>
+              </div>
+              <p class="text-[11px] text-gray-600 mt-2 leading-relaxed">${place.description}</p>
+            </div>
+
+            <!-- Available Amenities -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
+              <h3 class="font-extrabold text-xs text-brand-dark mb-2">العناصر والخدمات المتاحة بالمكان:</h3>
+              <div class="flex flex-wrap gap-1.5">
+                ${place.features.map(f => `
+                  <span class="text-[11px] bg-brand-mint/70 text-brand-dark font-bold px-3 py-1 rounded-xl">${f}</span>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Place Continuous History Log (Core Concept Feature) -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100">
+              <h3 class="font-extrabold text-xs text-brand-dark mb-2.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-clock-rotate-left text-brand-gold"></i>
+                سجل تطورات المكان المستمر
+              </h3>
+              <div class="space-y-2.5 border-r-2 border-brand-primary/30 pr-3 mr-1">
+                ${place.historyLog.map(log => `
+                  <div class="relative">
+                    <span class="w-2.5 h-2.5 rounded-full bg-brand-primary absolute -right-[17px] top-1"></span>
+                    <p class="text-[10px] font-bold text-brand-gold">${log.date}</p>
+                    <p class="text-xs font-bold text-brand-charcoal">${log.title}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Add Rating & Review -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5">
+              <h3 class="font-extrabold text-xs text-brand-dark">قيّم تجربتك في المكان أو أضف تعليقاً</h3>
+              <div class="flex gap-2">
+                <input id="newPlaceComment" type="text" placeholder="اكتب رأيك في مستوى الظل والرصيف..." class="flex-1 bg-brand-cream rounded-xl px-3 py-2 text-xs focus:outline-none">
+                <button onclick="addPlaceReview(${place.id})" class="bg-brand-dark text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-brand-primary transition">
+                  إضافة
+                </button>
+              </div>
+              <div class="space-y-2 pt-2">
+                ${place.comments.map(c => `
+                  <div class="bg-brand-cream p-2.5 rounded-xl">
+                    <div class="flex items-center justify-between text-[11px] font-bold">
+                      <span class="text-brand-dark">${c.user}</span>
+                      <span class="text-brand-gold">${'⭐'.repeat(c.rating)}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-600 mt-1">${c.text}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Report New Issue in this Place -->
+            <button onclick="navigateTo(3)" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-xs py-3 rounded-2xl transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+              الإبلاغ عن مشكلة جديدة ظهرت في هذا المكان
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleFollowPlace(placeId) {
+      const place = state.places.find(p => p.id === placeId);
+      if (!place) return;
+      place.following = !place.following;
+      showToast(place.following ? 'تم تفعيل متابعة المكان واستلام إشعارات تطوره!' : 'تم إلغاء متابعة المكان');
+      renderCurrentScreen();
+    }
+
+    function addPlaceReview(placeId) {
+      const input = document.getElementById('newPlaceComment');
+      if (!input || !input.value.trim()) return;
+      const place = state.places.find(p => p.id === placeId);
+      place.comments.unshift({
+        user: 'هالة أحمد (أنت)',
+        rating: 5,
+        text: input.value.trim()
+      });
+      place.reviewsCount += 1;
+      showToast('تم إضافة تقييمك لتجربة المشي في المكان!', 20);
+      renderCurrentScreen();
+    }
+
+    // Initialize Application on Load
+    window.onload = function () {
+      renderNavigationBars();
+      renderCurrentScreen();
+    };
+  </script>
+</body>
+</html>
